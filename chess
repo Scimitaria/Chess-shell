@@ -1,3 +1,33 @@
 #!/bin/zsh
 
-echo "chess"
+###########################
+## Defining Chess Pieces ##
+###########################
+
+#shell doesnt have classes,
+#so we need to use builtins.
+
+#Format: <x><y><type><team>
+#piece types:
+#p - pawn
+#r - rook
+#n - knight
+#b - bishop
+#q - queen
+#k - king
+
+#piece teams:
+#w - white
+#b - black
+
+initBoard=(
+    11rw 21nw 31bw 41qw 51kw 61bw 71nw 81rw 
+    12pw 22pw 32pw 42pw 52pw 62pw 72pw 82pw
+    17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
+    18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
+)
+##############################
+## End of piece definitions ##
+##############################
+
+echo $initBoard[1]
