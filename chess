@@ -30,4 +30,33 @@ initBoard=(
 ## End of piece definitions ##
 ##############################
 
-echo $initBoard[1]
+#############
+## Parsing ##
+#############
+
+function getPiecePos {
+    local piece=$1
+    echo "${piece:0:2}"
+}
+function getPieceType {
+    local piece=$1
+    echo ${piece:2:1}
+}
+function getPieceTeam {
+    local piece=$1
+    echo ${piece:3}
+}
+
+function searchPos {
+    local pos=$1
+    for piece in $initBoard
+        if [[ $(getPiecePos $piece) == $pos ]]; then
+            echo $piece
+        fi
+}
+
+searchPos "11"
+
+#################
+## End parsing ##
+#################
