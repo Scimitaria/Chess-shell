@@ -152,6 +152,24 @@ function isEmpty {
     local board=("$@")
     [[ $(searchPos $pos $board) == "empty" ]]
 }
+function isOpposite {
+    local piece=$1
+    local pos=$2
+    shift 2
+    local board=("$@")
+
+    local targetTeam=$(searchPos "$pos" "${board[@]}")
+    local pieceTeam=$(getPieceTeam "$piece")
+
+    [[ $targetTeam != "empty" && $(getPieceTeam $targetTeam) != "$pieceTeam" ]]
+}
+function canMake {
+    local piece=$1
+    local pos=$2
+    shift 2
+    local board=("$@")
+    isEmpty "$pos" "${board[@]}" || isOpposite "$piece" "$pos" "${board[@]}"
+}
 function p2m {
     piece=$1
     y=${piece:1:1}
@@ -175,7 +193,7 @@ function possibleMoves {
 
     shift
     local board=("$@")
-#TODO: knight,king
+#TODO: knight
     case $type in
       "p")
         #pawn moves
@@ -362,35 +380,35 @@ function possibleMoves {
       "k")
         #king moves
         changex=$((x+1))
-        if inBounds $changex; then
+        if inBounds $changex && canMake $piece "$changex$y" $board; then
           moves+=("$changex$y")
           changey=$((y+1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
         changex=$((x-1))
-        if inBounds $changex; then
+        if inBounds $changex && canMake $piece "$changex$y" $board; then
           moves+=("$changex$y")
           changey=$((y+1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
         changey=$((y+1))
-        if inBounds $changey; then
+        if inBounds $changey && canMake $piece "$x$changey" $board; then
           moves+=("$x$changey")
         fi
         changey=$((y-1))
-        if inBounds $changey; then
+        if inBounds $changey && canMake $piece "$x$changey" $board; then
           moves+=("$x$changey")
         fi
         ;;
@@ -400,7 +418,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "16pb" $initBoard
+possibleMoves "55kb" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
