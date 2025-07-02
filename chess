@@ -225,7 +225,50 @@ function possibleMoves {
         ;;
       "n")
         #knight moves
-        moves=()
+        changex=$((x+2))
+        if inBounds $changex; then
+          changey=$((y+1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
+        changex=$((x-2))
+        if inBounds $changex; then
+          changey=$((y+1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
+        changex=$((x+1))
+        if inBounds $changex; then
+          changey=$((y+2))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-2))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
+        changex=$((x-1))
+        if inBounds $changex; then
+          changey=$((y+2))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-2))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
         ;;
       "b")
         #bishop moves
@@ -332,7 +375,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "51kw" $initBoard
+possibleMoves "55nw" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
