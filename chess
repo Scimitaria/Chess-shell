@@ -23,7 +23,7 @@
 initBoard=(
     11rw 21nw 31bw 41qw 51kw 61bw 71nw 81rw 
     12pw 22pw 32pw 42pw 52pw 62pw 72pw 82pw
-    17pb 23pb 37pb 47pb 57pb 67pb 77pb 87pb
+    17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
     18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
 )
 
@@ -137,6 +137,11 @@ function showBoard {
 ## Moves ##
 ###########
 
+function inBounds {
+    local pos=$1
+    [[ $pos -le 8 && $pos -ge 1 ]]
+}
+
 #Does not include castling or en passant
 moves=()
 function possibleMoves {
@@ -180,7 +185,24 @@ function possibleMoves {
         esac
         ;;
       "r")
-        moves=("placeholder" "placeholder")
+        for i in {1..7}; do
+          change=$((x+i))
+          if inBounds $change; then
+            moves+=("$change$y")
+          fi
+          change=$((x-i))
+          if inBounds $change; then
+            moves+=("$change$y")
+          fi
+          change=$((y+i))
+          if inBounds $change; then
+            moves+=("$x$change")
+          fi
+          change=$((y-i))
+          if inBounds $change; then
+            moves+=("$x$change")
+          fi
+        done
         ;;
       "n")
         moves=()
@@ -200,7 +222,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "12pw" $initBoard
+possibleMoves "11rw" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
