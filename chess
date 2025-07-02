@@ -249,7 +249,40 @@ function possibleMoves {
         ;;
       "q")
         #queen moves
-        moves=()
+        for i in {1..7}; do
+          changex=$((x+i))
+          if inBounds $changex; then
+            moves+=("$changex$y")
+            changey=$((y+i))
+            if inBounds $changey; then
+              moves+=("$changex$changey")
+            fi
+            changey=$((y-i))
+            if inBounds $changey; then
+              moves+=("$changex$changey")
+            fi
+          fi
+          changex=$((x-i))
+          if inBounds $changex; then
+            moves+=("$changex$y")
+            changey=$((y+i))
+            if inBounds $changey; then
+              moves+=("$changex$changey")
+            fi
+            changey=$((y-i))
+            if inBounds $changey; then
+              moves+=("$changex$changey")
+            fi
+          fi
+          changey=$((y+i))
+          if inBounds $changey; then
+            moves+=("$x$changey")
+          fi
+          changey=$((y-i))
+          if inBounds $changey; then
+            moves+=("$x$changey")
+          fi
+        done
         ;;
       "k")
         #king moves
@@ -261,7 +294,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "33bw" $initBoard
+possibleMoves "33qw" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
