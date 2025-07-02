@@ -142,16 +142,7 @@ function inBounds {
     local pos=$1
     [[ $pos -le 8 && $pos -ge 1 ]]
 }
-#TODO: check is position occupied
-# function cleanup {
-#   local new_moves=()
-#   for move in $moves; do
-#     if inBounds $move; then
-#       new_moves+=$move
-#     fi
-#   done
-#   moves=("${new_moves[@]}")
-# }
+#TODO: check if position occupied
 
 #Does not include castling or en passant
 function possibleMoves {
@@ -178,7 +169,15 @@ function possibleMoves {
             if [[ $(getPieceTeam $(searchPos "$((x-1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
                 taking+=("$((x-1))$((y+1))")
             fi
-            moves=("${taking[@]}" "$x$((y+1))" "$x$((y+2))")
+            moves=("${taking[@]}")
+            changey=$((y+1))
+            if inBounds $changey; then
+              moves+=("$x$changey")
+            fi
+            changey=$((y+2))
+            if inBounds $changey; then
+              moves+=("$x$changey")
+            fi
             ;;
           "b")
             taking=()
@@ -188,7 +187,15 @@ function possibleMoves {
             if [[ $(getPieceTeam $(searchPos "$((x+1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
                 taking+=("$((x+1))$((y-1))")
             fi
-            moves=("${taking[@]}" "$x$((y-1))" "$x$((y-2))")
+            moves=("${taking[@]}")
+            changey=$((y-1))
+            if inBounds $changey; then
+              moves+=("$x$changey")
+            fi
+            changey=$((y-2))
+            if inBounds $changey; then
+              moves+=("$x$changey")
+            fi
             ;;
           *)
             echo "ERROR: unknown team"
@@ -286,7 +293,38 @@ function possibleMoves {
         ;;
       "k")
         #king moves
-        moves=()
+        changex=$((x+1))
+        if inBounds $changex; then
+          moves+=("$changex$y")
+          changey=$((y+1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
+        changex=$((x-1))
+        if inBounds $changex; then
+          moves+=("$changex$y")
+          changey=$((y+1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+          changey=$((y-1))
+          if inBounds $changey; then
+            moves+=("$changex$changey")
+          fi
+        fi
+        changey=$((y+1))
+        if inBounds $changey; then
+          moves+=("$x$changey")
+        fi
+        changey=$((y-1))
+        if inBounds $changey; then
+          moves+=("$x$changey")
+        fi
         ;;
       *) 
         echo "ERROR: not a piece"
@@ -294,7 +332,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "33qw" $initBoard
+possibleMoves "51kw" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
