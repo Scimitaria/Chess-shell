@@ -39,6 +39,10 @@ function getPiecePos {
     local piece=$1
     echo ${piece:0:2}
 }
+function getPieceId {
+    local piece=$1
+    echo ${piece:2:2}
+}
 function getPieceType {
     local piece=$1
     echo ${piece:2:1}
@@ -62,7 +66,7 @@ function searchPos {
 
 function showPiece {
     local piece=$1
-    case "${piece:2:2}" in
+    case $(getPieceId $piece) in
       "pw")
           echo ♟
           ;;
@@ -118,3 +122,46 @@ function showBoard {
 #################
 ## End parsing ##
 #################
+
+#Does not include castling or en passant
+function possibleMoves {
+    local piece=$1
+    local type=$(getPieceType $piece)
+    local team=$(getPieceTeam $piece)
+
+    case $type in
+      "p")
+        case $team in
+          "w")
+            echo
+            ;;
+          "b")
+            echo
+            ;;
+          *)
+            echo "ERROR: unknown team"
+            ;;
+        esac
+        ;;
+      "r")
+        echo
+        ;;
+      "n")
+        echo
+        ;;
+      "b")
+        echo
+        ;;
+      "q")
+        echo
+        ;;
+      "k")
+        echo
+        ;;
+      *) 
+        echo "ERROR: not a piece"
+        ;;
+    esac
+}
+
+showBoard $initBoard
