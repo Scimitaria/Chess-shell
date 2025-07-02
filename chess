@@ -26,6 +26,7 @@ initBoard=(
     17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
     18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
 )
+
 ##############################
 ## End of piece definitions ##
 ##############################
@@ -36,7 +37,7 @@ initBoard=(
 
 function getPiecePos {
     local piece=$1
-    echo "${piece:0:2}"
+    echo ${piece:0:2}
 }
 function getPieceType {
     local piece=$1
@@ -49,7 +50,9 @@ function getPieceTeam {
 
 function searchPos {
     local pos=$1
-    for piece in $initBoard
+    shift
+    local board=("$@")
+    for piece in $board
         if [[ $(getPiecePos $piece) == $pos ]]; then
             echo $piece
             return
@@ -96,14 +99,22 @@ function showPiece {
       "kb")
           echo ♔
           ;;
-      "empty")
+      *)
           echo .
           ;;
     esac
+}
+function showBoard {
+    local board=("$@")
+    for y in {8..1}; do
+        for x in {1..8}; do
+            piece=$(searchPos "$x$y" $board)
+            printf "%s " $(showPiece $piece)
+        done
+        echo
+    done
 }
 
 #################
 ## End parsing ##
 #################
-
-
