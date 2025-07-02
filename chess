@@ -193,7 +193,7 @@ function possibleMoves {
 
     shift
     local board=("$@")
-#TODO: knight
+
     case $type in
       "p")
         #pawn moves
@@ -275,44 +275,44 @@ function possibleMoves {
         changex=$((x+2))
         if inBounds $changex; then
           changey=$((y+1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
         changex=$((x-2))
         if inBounds $changex; then
           changey=$((y+1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-1))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
         changex=$((x+1))
         if inBounds $changex; then
           changey=$((y+2))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-2))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
         changex=$((x-1))
         if inBounds $changex; then
           changey=$((y+2))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
           changey=$((y-2))
-          if inBounds $changey; then
+          if inBounds $changey && canMake $piece "$changex$changey" $board; then
             moves+=("$changex$changey")
           fi
         fi
@@ -418,7 +418,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "55kb" $initBoard
+possibleMoves "21nb" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
