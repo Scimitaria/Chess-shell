@@ -144,7 +144,21 @@ moves=()
 
 function inBounds {
     local pos=$1
-    [[ $pos -le 8 && $pos -ge 1 ]]
+    (( pos >= 1 && pos <= 8 ))
+}
+function isEmpty {
+    local pos=$1
+    shift
+    local board=("$@")
+    [[ $(searchPos $pos $board) == "empty" ]]
+}
+function p2m {
+    piece=$1
+    y=${piece:1:1}
+    case $(getPieceTeam $piece) in
+      "w") (( $y == "2" )) ;;
+      "b") (( $y == "7" )) ;;
+    esac
 }
 
 #Does not include castling or en passant
@@ -161,7 +175,7 @@ function possibleMoves {
 
     shift
     local board=("$@")
-
+#TODO: knight,king
     case $type in
       "p")
         #pawn moves
@@ -176,11 +190,11 @@ function possibleMoves {
             fi
             moves=("${taking[@]}")
             changey=$((y+1))
-            if inBounds $changey; then
+            if inBounds $changey && isEmpty "$x$changey" $board; then
               moves+=("$x$changey")
             fi
             changey=$((y+2))
-            if inBounds $changey; then
+            if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
               moves+=("$x$changey")
             fi
             ;;
@@ -194,11 +208,11 @@ function possibleMoves {
             fi
             moves=("${taking[@]}")
             changey=$((y-1))
-            if inBounds $changey; then
+            if inBounds $changey && isEmpty "$x$changey" $board; then
               moves+=("$x$changey")
             fi
             changey=$((y-2))
-            if inBounds $changey; then
+            if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
               moves+=("$x$changey")
             fi
             ;;
@@ -386,7 +400,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "44bw" $initBoard
+possibleMoves "16pb" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
