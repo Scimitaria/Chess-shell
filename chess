@@ -52,11 +52,58 @@ function searchPos {
     for piece in $initBoard
         if [[ $(getPiecePos $piece) == $pos ]]; then
             echo $piece
+            return
         fi
+    echo "empty"
 }
 
-searchPos "11"
+function showPiece {
+    local piece=$1
+    case "${piece:2:2}" in
+      "pw")
+          echo ♟
+          ;;
+      "rw")
+          echo ♜
+          ;;
+      "nw")
+          echo ♞
+          ;;
+      "bw")
+          echo ♝
+          ;;
+      "qw")
+          echo ♛
+          ;;
+      "kw")
+          echo ♚
+          ;;
+      "pb")
+          echo ♙
+          ;;
+      "rb")
+          echo ♖
+          ;;
+      "nb")
+          echo ♘
+          ;;
+      "bb")
+          echo ♗
+          ;;
+      "qb")
+          echo ♕
+          ;;
+      "kb")
+          echo ♔
+          ;;
+      "empty")
+          echo .
+          ;;
+    esac
+}
 
 #################
 ## End parsing ##
 #################
+
+
