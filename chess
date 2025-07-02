@@ -120,13 +120,16 @@ function showPiece {
 }
 function showBoard {
     local board=("$@")
+
     for y in {8..1}; do
+        printf "$y "
         for x in {1..8}; do
             piece=$(searchPos "$x$y" $board)
             printf "%s " $(showPiece $piece)
         done
         echo
     done
+    echo "  1 2 3 4 5 6 7 8"
 }
 
 #################
@@ -138,14 +141,16 @@ function showBoard {
 ###########
 
 moves=()
+
 function inBounds {
     local pos=$1
     [[ $pos -le 8 && $pos -ge 1 ]]
 }
-#TODO: check if position occupied
 
 #Does not include castling or en passant
 function possibleMoves {
+    moves=()
+
     local piece=$1
     local type=$(getPieceType $piece)
     local team=$(getPieceTeam $piece)
@@ -204,23 +209,33 @@ function possibleMoves {
         ;;
       "r")
         #rook moves
-        for i in {1..7}; do
-          change=$((x+i))
-          if inBounds $change; then
-            moves+=("$change$y")
-          fi
-          change=$((x-i))
-          if inBounds $change; then
-            moves+=("$change$y")
-          fi
-          change=$((y+i))
-          if inBounds $change; then
-            moves+=("$x$change")
-          fi
-          change=$((y-i))
-          if inBounds $change; then
-            moves+=("$x$change")
-          fi
+        local directions=("1 0" "-1 0" "0 1" "0 -1")
+
+        for dir in "${directions[@]}"; do
+          dx=${dir% *}
+          dy=${dir#* }
+          cx=$x
+          cy=$y
+
+          while true; do
+            cx=$((cx + dx))
+            cy=$((cy + dy))
+
+            if ! inBounds $cx || ! inBounds $cy; then
+              break
+            fi
+
+            pos="$cx$cy"
+            target=$(searchPos "$pos" "${board[@]}")
+            if [[ $target == "empty" ]]; then
+              moves+=("$pos")
+            else
+              if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                moves+=("$pos")  # capture enemy
+              fi
+              break  # stop after any piece
+            fi
+          done
         done
         ;;
       "n")
@@ -272,66 +287,62 @@ function possibleMoves {
         ;;
       "b")
         #bishop moves
-        for i in {1..7}; do
-          changex=$((x+i))
-          if inBounds $changex; then
-            changey=$((y+i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
+        local directions=("1 1" "-1 -1" "1 -1" "-1 1")
+        for dir in "${directions[@]}"; do
+          dx=${dir% *}
+          dy=${dir#* }
+          cx=$x
+          cy=$y
+
+          while true; do
+            cx=$((cx + dx))
+            cy=$((cy + dy))
+
+            if ! inBounds $cx || ! inBounds $cy; then
+              break
             fi
-            changey=$((y-i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
+
+            pos="$cx$cy"
+            target=$(searchPos "$pos" "${board[@]}")
+            if [[ $target == "empty" ]]; then
+              moves+=("$pos")
+            else
+              if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                moves+=("$pos")  # capture enemy
+              fi
+              break  # stop after any piece
             fi
-          fi
-          changex=$((x-i))
-          if inBounds $changex; then
-            changey=$((y+i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
-            fi
-            changey=$((y-i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
-            fi
-          fi
+          done
         done
         ;;
       "q")
-        #queen moves
-        for i in {1..7}; do
-          changex=$((x+i))
-          if inBounds $changex; then
-            moves+=("$changex$y")
-            changey=$((y+i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
+        # Queen = rook + bishop movement
+        local directions=("1 0" "-1 0" "0 1" "0 -1" "1 1" "-1 -1" "1 -1" "-1 1")
+        for dir in "${directions[@]}"; do
+          dx=${dir% *}
+          dy=${dir#* }
+          cx=$x
+          cy=$y
+
+          while true; do
+            cx=$((cx + dx))
+            cy=$((cy + dy))
+
+            if ! inBounds $cx || ! inBounds $cy; then
+              break
             fi
-            changey=$((y-i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
+
+            pos="$cx$cy"
+            target=$(searchPos "$pos" "${board[@]}")
+            if [[ $target == "empty" ]]; then
+              moves+=("$pos")
+            else
+              if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                moves+=("$pos")  # capture enemy
+              fi
+              break  # stop after any piece
             fi
-          fi
-          changex=$((x-i))
-          if inBounds $changex; then
-            moves+=("$changex$y")
-            changey=$((y+i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
-            fi
-            changey=$((y-i))
-            if inBounds $changey; then
-              moves+=("$changex$changey")
-            fi
-          fi
-          changey=$((y+i))
-          if inBounds $changey; then
-            moves+=("$x$changey")
-          fi
-          changey=$((y-i))
-          if inBounds $changey; then
-            moves+=("$x$changey")
-          fi
+          done
         done
         ;;
       "k")
@@ -375,7 +386,7 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "55nw" $initBoard
+possibleMoves "44bw" $initBoard
 showBoard $initBoard
 echo "Moves: ${moves[@]}"
 
