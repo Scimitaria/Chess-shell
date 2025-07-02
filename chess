@@ -23,7 +23,7 @@
 initBoard=(
     11rw 21nw 31bw 41qw 51kw 61bw 71nw 81rw 
     12pw 22pw 32pw 42pw 52pw 62pw 72pw 82pw
-    17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
+    17pb 23pb 37pb 47pb 57pb 67pb 77pb 87pb
     18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
 )
 
@@ -34,6 +34,8 @@ initBoard=(
 #############
 ## Parsing ##
 #############
+
+#Functions do not have contingencies for incorrect args
 
 function getPiecePos {
     local piece=$1
@@ -49,7 +51,15 @@ function getPieceType {
 }
 function getPieceTeam {
     local piece=$1
-    echo ${piece:3}
+    echo ${piece:3:1}
+}
+function oppositeTeam {
+    local team=$1
+    case $team in
+      "w") echo "b" ;;
+      "b") echo "w" ;;
+      *) echo $team ;;
+    esac
 }
 
 function searchPos {
@@ -123,20 +133,46 @@ function showBoard {
 ## End parsing ##
 #################
 
+###########
+## Moves ##
+###########
+
 #Does not include castling or en passant
+moves=()
 function possibleMoves {
     local piece=$1
     local type=$(getPieceType $piece)
     local team=$(getPieceTeam $piece)
 
+    local pos=$(getPiecePos $piece)
+    local x=${pos:0:1}
+    local y=${pos:1:1}
+
+    shift
+    local board=("$@")
+
     case $type in
       "p")
         case $team in
           "w")
-            echo
+            taking=()
+            if [[ $(getPieceTeam $(searchPos "$((x+1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
+                taking+=("$((x+1))$((y+1))")
+            fi
+            if [[ $(getPieceTeam $(searchPos "$((x-1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
+                taking+=("$((x-1))$((y+1))")
+            fi
+            moves=("${taking[@]}" "$x$((y+1))" "$x$((y+2))")
             ;;
           "b")
-            echo
+            taking=()
+            if [[ $(getPieceTeam $(searchPos "$((x-1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
+                taking+=("$((x-1))$((y-1))")
+            fi
+            if [[ $(getPieceTeam $(searchPos "$((x+1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
+                taking+=("$((x+1))$((y-1))")
+            fi
+            moves=("${taking[@]}" "$x$((y-1))" "$x$((y-2))")
             ;;
           *)
             echo "ERROR: unknown team"
@@ -144,19 +180,19 @@ function possibleMoves {
         esac
         ;;
       "r")
-        echo
+        moves=("placeholder" "placeholder")
         ;;
       "n")
-        echo
+        moves=()
         ;;
       "b")
-        echo
+        moves=()
         ;;
       "q")
-        echo
+        moves=()
         ;;
       "k")
-        echo
+        moves=()
         ;;
       *) 
         echo "ERROR: not a piece"
@@ -164,4 +200,10 @@ function possibleMoves {
     esac
 }
 
+possibleMoves "12pw" $initBoard
 showBoard $initBoard
+echo "Moves: ${moves[@]}"
+
+###############
+## End Moves ##
+###############
