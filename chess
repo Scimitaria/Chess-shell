@@ -418,10 +418,48 @@ function possibleMoves {
     esac
 }
 
-possibleMoves "21nb" $initBoard
+function showMoves {
+    local piece=$1
+    shift
+    local board=("$@")
+
+    possibleMoves $piece $board
+    echo "Moves: ${moves[@]}"
+}
+
 showBoard $initBoard
-echo "Moves: ${moves[@]}"
+showMoves "12pw" $initBoard
+
+function canPromote {
+    local piece=$1
+    local pos=$2
+    local y=${pos:1:1}
+    [[ ($(getPieceTeam $piece) == "w" && $y == "8") || ($(getPieceTeam $piece) == "b" && $y == "1") ]]
+}
+function move {
+    local piece=$1
+    local pos=$2
+    shift 2
+    local board=("$@")
+ 
+    possibleMoves $piece $board
+
+    for move in $moves; do
+      if [[ $move == $pos ]]; then
+        if canPromote $piece $pos; then
+             local id="q$(getPieceTeam $piece)"
+        else local id=$(getPieceId $piece)
+        fi
+        
+        echo "$move$id"
+      fi
+    done
+}
+
+move "17pw" "28" $initBoard
 
 ###############
 ## End Moves ##
 ###############
+
+#TODO: cleanup & documentation
