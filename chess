@@ -22,7 +22,7 @@
 
 initBoard=(
     11rw 21nw 31bw 41qw 51kw 61bw 71nw 81rw 
-    12pw 22pw 32pw 42pw 52pw 62pw 72pw 82pw
+    12pw 22pw 32pw 42pw 56pw 62pw 72pw 82pw
     17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
     18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
 )
@@ -427,9 +427,6 @@ function showMoves {
     echo "Moves: ${moves[@]}"
 }
 
-showBoard $initBoard
-showMoves "12pw" $initBoard
-
 function canPromote {
     local piece=$1
     local pos=$2
@@ -451,12 +448,33 @@ function move {
         else local id=$(getPieceId $piece)
         fi
         
-        echo "$move$id"
+        local newPiece="$move$id"
+
+
+        # Create a new array excluding $piece
+        newBoard=()
+        for p in $board; do
+          local loc=$(getPiecePos $p)
+          [[ $p != $piece ]] && [[ $loc != $pos ]] && newBoard+=$p
+        done
+
+        # Add the new piece
+        newBoard+=$newPiece
+
+        # Assign back to board
+        board=("${newBoard[@]}")
+
+        showBoard $board
+        return
       fi
     done
+    echo "Illegal move"
 }
 
-move "17pw" "28" $initBoard
+showBoard $initBoard
+showMoves "56pw" $initBoard
+move "56pw" "47" $initBoard
+showMoves "47pw" $initBoard
 
 ###############
 ## End Moves ##
