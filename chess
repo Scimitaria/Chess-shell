@@ -22,10 +22,11 @@
 
 initBoard=(
     11rw 21nw 31bw 41qw 51kw 61bw 71nw 81rw 
-    12pw 22pw 32pw 42pw 56pw 62pw 72pw 82pw
+    12pw 22pw 32pw 42pw 52pw 62pw 72pw 82pw
     17pb 27pb 37pb 47pb 57pb 67pb 77pb 87pb
     18rb 28nb 38bb 48qb 58kb 68bb 78nb 88rb 
 )
+turn="w"
 
 ##############################
 ## End of piece definitions ##
@@ -191,231 +192,239 @@ function possibleMoves {
     local x=${pos:0:1}
     local y=${pos:1:1}
 
+    if [[ ! $pos =~ '^[1-8][1-8]$' ]]; then
+      echo "Error: invalid position $pos"
+      return 1
+    fi
+
     shift
     local board=("$@")
 
-    case $type in
-      "p")
-        #pawn moves
-        case $team in
-          "w")
-            taking=()
-            if [[ $(getPieceTeam $(searchPos "$((x+1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
-                taking+=("$((x+1))$((y+1))")
+    if [[ $turn == $team ]]; then
+        case $type in
+          "p")
+            #pawn moves
+            case $team in
+              "w")
+                taking=()
+                if [[ $(getPieceTeam $(searchPos "$((x+1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
+                    taking+=("$((x+1))$((y+1))")
+                fi
+                if [[ $(getPieceTeam $(searchPos "$((x-1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
+                    taking+=("$((x-1))$((y+1))")
+                fi
+                moves=("${taking[@]}")
+                changey=$((y+1))
+                if inBounds $changey && isEmpty "$x$changey" $board; then
+                  moves+=("$x$changey")
+                fi
+                changey=$((y+2))
+                if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
+                  moves+=("$x$changey")
+                fi
+                ;;
+              "b")
+                taking=()
+                if [[ $(getPieceTeam $(searchPos "$((x-1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
+                    taking+=("$((x-1))$((y-1))")
+                fi
+                if [[ $(getPieceTeam $(searchPos "$((x+1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
+                    taking+=("$((x+1))$((y-1))")
+                fi
+                moves=("${taking[@]}")
+                changey=$((y-1))
+                if inBounds $changey && isEmpty "$x$changey" $board; then
+                  moves+=("$x$changey")
+                fi
+                changey=$((y-2))
+                if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
+                  moves+=("$x$changey")
+                fi
+                ;;
+              *)
+                echo "ERROR: unknown team"
+                ;;
+            esac
+            ;;
+          "r")
+            #rook moves
+            local directions=("1 0" "-1 0" "0 1" "0 -1")
+
+            for dir in "${directions[@]}"; do
+              dx=${dir% *}
+              dy=${dir#* }
+              cx=$x
+              cy=$y
+
+              while true; do
+                cx=$((cx + dx))
+                cy=$((cy + dy))
+
+                if ! inBounds $cx || ! inBounds $cy; then
+                  break
+                fi
+
+                pos="$cx$cy"
+                target=$(searchPos "$pos" "${board[@]}")
+                if [[ $target == "empty" ]]; then
+                  moves+=("$pos")
+                else
+                  if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                    moves+=("$pos")  # capture enemy
+                  fi
+                  break  # stop after any piece
+                fi
+              done
+            done
+            ;;
+          "n")
+            #knight moves
+            changex=$((x+2))
+            if inBounds $changex; then
+              changey=$((y+1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
-            if [[ $(getPieceTeam $(searchPos "$((x-1))$((y+1))" $board)) == $(oppositeTeam $team) ]]; then
-                taking+=("$((x-1))$((y+1))")
+            changex=$((x-2))
+            if inBounds $changex; then
+              changey=$((y+1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
-            moves=("${taking[@]}")
-            changey=$((y+1))
-            if inBounds $changey && isEmpty "$x$changey" $board; then
-              moves+=("$x$changey")
+            changex=$((x+1))
+            if inBounds $changex; then
+              changey=$((y+2))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-2))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
-            changey=$((y+2))
-            if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
-              moves+=("$x$changey")
+            changex=$((x-1))
+            if inBounds $changex; then
+              changey=$((y+2))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-2))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
             ;;
           "b")
-            taking=()
-            if [[ $(getPieceTeam $(searchPos "$((x-1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
-                taking+=("$((x-1))$((y-1))")
+            #bishop moves
+            local directions=("1 1" "-1 -1" "1 -1" "-1 1")
+            for dir in "${directions[@]}"; do
+              dx=${dir% *}
+              dy=${dir#* }
+              cx=$x
+              cy=$y
+
+              while true; do
+                cx=$((cx + dx))
+                cy=$((cy + dy))
+
+                if ! inBounds $cx || ! inBounds $cy; then
+                  break
+                fi
+
+                pos="$cx$cy"
+                target=$(searchPos "$pos" "${board[@]}")
+                if [[ $target == "empty" ]]; then
+                  moves+=("$pos")
+                else
+                  if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                    moves+=("$pos")  # capture enemy
+                  fi
+                  break  # stop after any piece
+                fi
+              done
+            done
+            ;;
+          "q")
+            # Queen = rook + bishop movement
+            local directions=("1 0" "-1 0" "0 1" "0 -1" "1 1" "-1 -1" "1 -1" "-1 1")
+            for dir in "${directions[@]}"; do
+              dx=${dir% *}
+              dy=${dir#* }
+              cx=$x
+              cy=$y
+
+              while true; do
+                cx=$((cx + dx))
+                cy=$((cy + dy))
+
+                if ! inBounds $cx || ! inBounds $cy; then
+                  break
+                fi
+
+                pos="$cx$cy"
+                target=$(searchPos "$pos" "${board[@]}")
+                if [[ $target == "empty" ]]; then
+                  moves+=("$pos")
+                else
+                  if [[ $(getPieceTeam "$target") != "$team" ]]; then
+                    moves+=("$pos")  # capture enemy
+                  fi
+                  break  # stop after any piece
+                fi
+              done
+            done
+            ;;
+          "k")
+            #king moves
+            changex=$((x+1))
+            if inBounds $changex && canMake $piece "$changex$y" $board; then
+              moves+=("$changex$y")
+              changey=$((y+1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
-            if [[ $(getPieceTeam $(searchPos "$((x+1))$((y-1))" $board)) == $(oppositeTeam $team) ]]; then
-                taking+=("$((x+1))$((y-1))")
+            changex=$((x-1))
+            if inBounds $changex && canMake $piece "$changex$y" $board; then
+              moves+=("$changex$y")
+              changey=$((y+1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
+              changey=$((y-1))
+              if inBounds $changey && canMake $piece "$changex$changey" $board; then
+                moves+=("$changex$changey")
+              fi
             fi
-            moves=("${taking[@]}")
-            changey=$((y-1))
-            if inBounds $changey && isEmpty "$x$changey" $board; then
+            changey=$((y+1))
+            if inBounds $changey && canMake $piece "$x$changey" $board; then
               moves+=("$x$changey")
             fi
-            changey=$((y-2))
-            if inBounds $changey && isEmpty "$x$changey" $board && p2m $piece; then
+            changey=$((y-1))
+            if inBounds $changey && canMake $piece "$x$changey" $board; then
               moves+=("$x$changey")
             fi
             ;;
-          *)
-            echo "ERROR: unknown team"
+          *) 
+            echo "ERROR: not a piece"
             ;;
         esac
-        ;;
-      "r")
-        #rook moves
-        local directions=("1 0" "-1 0" "0 1" "0 -1")
-
-        for dir in "${directions[@]}"; do
-          dx=${dir% *}
-          dy=${dir#* }
-          cx=$x
-          cy=$y
-
-          while true; do
-            cx=$((cx + dx))
-            cy=$((cy + dy))
-
-            if ! inBounds $cx || ! inBounds $cy; then
-              break
-            fi
-
-            pos="$cx$cy"
-            target=$(searchPos "$pos" "${board[@]}")
-            if [[ $target == "empty" ]]; then
-              moves+=("$pos")
-            else
-              if [[ $(getPieceTeam "$target") != "$team" ]]; then
-                moves+=("$pos")  # capture enemy
-              fi
-              break  # stop after any piece
-            fi
-          done
-        done
-        ;;
-      "n")
-        #knight moves
-        changex=$((x+2))
-        if inBounds $changex; then
-          changey=$((y+1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        changex=$((x-2))
-        if inBounds $changex; then
-          changey=$((y+1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        changex=$((x+1))
-        if inBounds $changex; then
-          changey=$((y+2))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-2))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        changex=$((x-1))
-        if inBounds $changex; then
-          changey=$((y+2))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-2))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        ;;
-      "b")
-        #bishop moves
-        local directions=("1 1" "-1 -1" "1 -1" "-1 1")
-        for dir in "${directions[@]}"; do
-          dx=${dir% *}
-          dy=${dir#* }
-          cx=$x
-          cy=$y
-
-          while true; do
-            cx=$((cx + dx))
-            cy=$((cy + dy))
-
-            if ! inBounds $cx || ! inBounds $cy; then
-              break
-            fi
-
-            pos="$cx$cy"
-            target=$(searchPos "$pos" "${board[@]}")
-            if [[ $target == "empty" ]]; then
-              moves+=("$pos")
-            else
-              if [[ $(getPieceTeam "$target") != "$team" ]]; then
-                moves+=("$pos")  # capture enemy
-              fi
-              break  # stop after any piece
-            fi
-          done
-        done
-        ;;
-      "q")
-        # Queen = rook + bishop movement
-        local directions=("1 0" "-1 0" "0 1" "0 -1" "1 1" "-1 -1" "1 -1" "-1 1")
-        for dir in "${directions[@]}"; do
-          dx=${dir% *}
-          dy=${dir#* }
-          cx=$x
-          cy=$y
-
-          while true; do
-            cx=$((cx + dx))
-            cy=$((cy + dy))
-
-            if ! inBounds $cx || ! inBounds $cy; then
-              break
-            fi
-
-            pos="$cx$cy"
-            target=$(searchPos "$pos" "${board[@]}")
-            if [[ $target == "empty" ]]; then
-              moves+=("$pos")
-            else
-              if [[ $(getPieceTeam "$target") != "$team" ]]; then
-                moves+=("$pos")  # capture enemy
-              fi
-              break  # stop after any piece
-            fi
-          done
-        done
-        ;;
-      "k")
-        #king moves
-        changex=$((x+1))
-        if inBounds $changex && canMake $piece "$changex$y" $board; then
-          moves+=("$changex$y")
-          changey=$((y+1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        changex=$((x-1))
-        if inBounds $changex && canMake $piece "$changex$y" $board; then
-          moves+=("$changex$y")
-          changey=$((y+1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-          changey=$((y-1))
-          if inBounds $changey && canMake $piece "$changex$changey" $board; then
-            moves+=("$changex$changey")
-          fi
-        fi
-        changey=$((y+1))
-        if inBounds $changey && canMake $piece "$x$changey" $board; then
-          moves+=("$x$changey")
-        fi
-        changey=$((y-1))
-        if inBounds $changey && canMake $piece "$x$changey" $board; then
-          moves+=("$x$changey")
-        fi
-        ;;
-      *) 
-        echo "ERROR: not a piece"
-        ;;
-    esac
+    else echo "Error: wrong team"
+    fi
 }
 
 function showMoves {
@@ -438,7 +447,7 @@ function move {
     local pos=$2
     shift 2
     local board=("$@")
- 
+
     possibleMoves $piece $board
 
     for move in $moves; do
@@ -447,37 +456,64 @@ function move {
              local id="q$(getPieceTeam $piece)"
         else local id=$(getPieceId $piece)
         fi
-        
+
         local newPiece="$move$id"
 
-
-        # Create a new array excluding $piece
         newBoard=()
         for p in $board; do
           local loc=$(getPiecePos $p)
           [[ $p != $piece ]] && [[ $loc != $pos ]] && newBoard+=$p
         done
 
-        # Add the new piece
         newBoard+=$newPiece
 
-        # Assign back to board
-        board=("${newBoard[@]}")
+        local newTurn=$(oppositeTeam $turn)
 
-        showBoard $board
-        return
+        # Output updated board and updated turn as a space-separated string
+        echo "${newBoard[@]}" ::: "$newTurn"
+        return 0
       fi
     done
-    echo "Illegal move"
-}
 
-showBoard $initBoard
-showMoves "56pw" $initBoard
-move "56pw" "47" $initBoard
-showMoves "47pw" $initBoard
+    echo "Illegal move"
+    return 1
+}
 
 ###############
 ## End Moves ##
 ###############
 
 #TODO: cleanup & documentation
+#TODO: why is this not working
+game=("${initBoard[@]}")
+function play {
+    showBoard $game
+    #showMoves "58kb" $game
+
+    #local result=($(move "58kb" "47" $game))
+    local playPiece
+    local playPos
+    vared -p 'Enter the piece to move: ' playPiece
+    vared -p 'enter the position to move to: ' playPos
+    local result=($(move $playPiece $playPos $game))
+    if [[ $? -eq 0 ]]; then
+        # Find index of ::: separator
+        local splitIndex=0
+        for ((i=1; i<${#result[@]}; i++)); do
+            if [[ ${result[$i]} == ":::" ]]; then
+                splitIndex=$i
+                break
+            fi
+        done
+
+        # Assign board and turn
+        game=("${result[@]:0:$splitIndex}")
+        turn="${result[$((splitIndex + 1))]}"
+    else
+        echo "$result"
+    fi
+
+    #showMoves "43kb" $game
+    play
+}
+play
